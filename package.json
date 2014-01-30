@@ -51,6 +51,7 @@
     "i18n": "~0.4.1",
     "sails-generate": "~0.0.13",
     "include-all": "~0.1.2",
+    "sails-build-dictionary": "0.1.0",
     "connect-redis": "~1.4.5",
     "connect-mongo": "~0.3.2",
     "grunt-cli": "~0.1.11",
@@ -69,7 +70,8 @@
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-contrib-cssmin": "~0.6.1",
     "grunt-contrib-less": "~0.8.3",
-    "grunt-contrib-coffee": "~0.7.0"
+    "grunt-contrib-coffee": "~0.7.0",
+    "grunt-sync": "~0.0.4"
   },
   "testDependencies": {
     "root-require": "~0.2.0",
