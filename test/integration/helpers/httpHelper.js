@@ -1,6 +1,5 @@
 var request = require('request');
 var fs = require('fs');
-var spawn = require('child_process').spawn;
 
 module.exports = {
 
@@ -15,6 +14,8 @@ module.exports = {
 		fs.writeFileSync('config/blueprints.js', 'module.exports = ' + JSON.stringify(config));
 	},
 
+
+
 	// Starts sails server, makes request, returns response, kills sails server
 	testRoute: function(method, options, callback) {
 
@@ -25,46 +26,10 @@ module.exports = {
 			options.url = 'http://localhost:1337/'  + options.url;
 		}
 
-		// Start the sails server process
-		var sailsprocess = spawn('../bin/sails.js', ['lift']);
-
-		sailsprocess.on('error',function(err) {
-			return callback(err);
+		request[method](options, function(err, response) {
+			if (err) return callback(err);
+			callback(null, response);
 		});
 
-		// Catch stderr messages 
-		sailsprocess.stderr.on('data', function (data) {
-			// Change buffer to string, then error
-			var dataString = (data + '');
-
-			// Share error with user running tests
-			console.error(dataString);
-
-			// In some cases, fire cb w/ error (automatically failing test)
-			// var err = new Error( dataString );
-			// throw err;
-		});
-
-
-		sailsprocess.stdout.on('data',function(data) {
-
-			// Change buffer to string
-			var dataString = data + '';
-
-			// Make request once server has sucessfully started
-			if (dataString.match(/Server lifted/)) {
-				sailsprocess.stdout.removeAllListeners('data');
-				sailsprocess.stderr.removeAllListeners('data');
-				setTimeout(function () {
-					request[method](options, function(err, response) {
-						if (err) return callback(err);
-
-						// Kill server process and return response
-						sailsprocess.kill();
-						callback(null, response);
-					});
-				}, 1000);
-			}
-		});
 	}
 };
