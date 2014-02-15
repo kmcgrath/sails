@@ -40,10 +40,11 @@ module.exports = function ( ) {
 
 
 	// Get command-line arguments
+	// from the arguments to this function
 	var cliArguments = Array.prototype.slice.call(arguments);
-	
+
 	// Remove commander's extra argument
-	cliArguments.pop();
+	var commanderCmd = cliArguments.pop();
 	
 	// Peel off the generatorType and the rest of the args
 	scope.generatorType = cliArguments.shift();
@@ -52,12 +53,26 @@ module.exports = function ( ) {
 	// Create a new reportback
 	var cb = reportback.extend();
 
+	// Show usage if no generator type is defined
+	if (!scope.generatorType) {
+		return cb.log.error('Usage: sails generate [something]');
+	}
+
 	// Set the "invalid" exit to forward to "error"
+	cb.error = function(msg) {
+		var log = this.log || cb.log;
+		log.error(msg);
+		process.exit(1);
+	};
+
 	cb.invalid = 'error';
 
 	// If the generator type is "api", we currently treat it as a special case.
 	// (todo: pull this out into a simple generator)
 	if (scope.generatorType === 'api') {
+		if (scope.args.length === 0) {
+			return cb.error('Usage: sails generate api [api name]');
+		}
 		require('./_generate-api')(scope, cb);
 	}
 
