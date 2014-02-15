@@ -87,7 +87,6 @@
     "fs-extra": "~0.8.1",
     "socket.io-client": "~0.9.16"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git://github.com/balderdashy/sails.git#v0.10"
