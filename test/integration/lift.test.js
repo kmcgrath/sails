@@ -41,18 +41,19 @@ describe('Starting sails server with lift', function() {
 			sailsBin = sailsBin.substr(1);
 		});
 
-		it('should throw an error', function(done) {
+		// TODO: make this test more useful
+		// it('should throw an error', function(done) {
 
-			sailsServer = spawn(sailsBin, ['lift']);
+		// 	sailsServer = spawn(sailsBin, ['lift']);
 
-			sailsServer.stderr.on('data', function(data) {
-				var dataString = data + '';
-				assert(dataString.indexOf('[err]') !== -1);
-				sailsServer.stderr.removeAllListeners('data');
-				sailsServer.kill();
-				done();
-			});
-		});
+		// 	sailsServer.stderr.on('data', function(data) {
+		// 		var dataString = data + '';
+		// 		assert(dataString.indexOf('[err]') !== -1);
+		// 		sailsServer.stderr.removeAllListeners('data');
+		// 		sailsServer.kill();
+		// 		done();
+		// 	});
+		// });
 	});
 
 	describe('in an sails app directory', function() {
@@ -66,7 +67,7 @@ describe('Starting sails server with lift', function() {
 				process.chdir(appName);
 				sailsBin = '.' + sailsBin;
 
-				sailsServer = spawn(sailsBin, ['lift']);
+				sailsServer = spawn(sailsBin, ['lift', '--port=1342']);
 
 				sailsServer.stdout.on('data', function(data) {					
 					var dataString = data + '';
@@ -80,16 +81,16 @@ describe('Starting sails server with lift', function() {
 			});
 		});
 
-		it('should respond to a request to port 1337 with a 200 status code', function(done) {
+		it('should respond to a request to port 1342 with a 200 status code', function(done) {
 			process.chdir(appName);
-			sailsServer = spawn(sailsBin, ['lift']);
+			sailsServer = spawn(sailsBin, ['lift', '--port=1342']);
 			sailsServer.stdout.on('data', function(data){
 				var dataString = data + '';
 				// Server has finished starting up
 				if (dataString.match(/Server lifted/)) {
 					sailsServer.stdout.removeAllListeners('data');
 					setTimeout(function(){
-						request('http://localhost:1337/', function(err, response) {
+						request('http://localhost:1342/', function(err, response) {
 							if (err) {
 								sailsServer.kill();
 								done(new Error(err));
@@ -123,7 +124,7 @@ describe('Starting sails server with lift', function() {
 			fs.writeFileSync('config/session.js', 'module.exports.session = { adapter: null }');
 
 
-			sailsServer = spawn(sailsBin, ['lift', '--prod']);
+			sailsServer = spawn(sailsBin, ['lift', '--prod', '--port=1342']);
 
 			sailsServer.stderr.on('data', function(data) {
 				var dataString = data + '';
@@ -142,14 +143,14 @@ describe('Starting sails server with lift', function() {
 			// Change environment to production in config file
 			fs.writeFileSync('config/application.js', 'module.exports = ' + JSON.stringify({
 				appName: 'Sails Application',
-				port: 1337,
+				port: 1342,
 				environment: 'production',
 				log: {
 					level: 'info'
 				}
 			}));
 
-			sailsServer = spawn(sailsBin, ['lift', '--dev']);
+			sailsServer = spawn(sailsBin, ['lift', '--dev', '--port=1342']);
 
 			sailsServer.stderr.on('data', function(data) {
 				var dataString = data + '';

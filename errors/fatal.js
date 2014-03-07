@@ -1,14 +1,11 @@
 /**
  * Module dependencies
  */
-var argv = require('optimist').argv
-	,	util = require('util')
-	,	cliutil = require('sails-util/cli')
-	,	Logger = require('captains-log');
+var util = require('util');
 
-
-// Build logger using command-line arguments
-var log = new Logger(cliutil.getCLIConfig(argv).log);
+// Build logger using best-available information
+// when this module is initially required.
+var log = require('captains-log')(require('../lib/configuration/rc'));
 
 /**
  * Fatal Errors
@@ -57,8 +54,8 @@ module.exports = {
 	// app/load.js:146
 	hooksTookTooLong: function () {
 		var hooksTookTooLongErr = 'Hooks are taking way too long to get ready...  ' +
-			'Something is amiss.\nAre you using any custom hooks?\nIf so, make sure the hook\'s ' +
-			'`initialize()` method is triggering it\'s callback.';
+			'Something might be amiss.\nAre you using any custom hooks?\nIf so, make sure the hook\'s ' +
+			'`initialize()` method is triggering its callback.';
 		log.error(hooksTookTooLongErr);
 		process.exit(1);
 	},
@@ -79,22 +76,34 @@ module.exports = {
 
 
 	__GruntAborted__: function ( consoleMsg, stackTrace ) {
-		log.error(
-			'A Grunt error occurred-- please fix it, then restart ' +
-			'Sails to continue watching assets.'
-		);
+
+		var gruntErr =
+			'\n------------------------------------------------------------------------\n' +
+			consoleMsg + '\n' + (stackTrace||'') +
+			'\n------------------------------------------------------------------------';
+		log.error(gruntErr);
+		log.blank();
+		
+		log.error('Looks like a Grunt error occurred--');
+		log.error('Please fix it, then restart Sails to continue watching assets.');
+		log.error('Or if you\'re stuck, check out the troubleshooting tips below.');
+		log.blank();
+
+		log.error('Troubleshooting tips:'.underline);
 		var relativePublicPath = (require('path').resolve(process.cwd(), './.tmp'));
 		var uid = process.getuid && process.getuid() || 'YOUR_COMPUTER_USER_NAME';
-		console.log();
-		log.error('You might have a malformed LESS or CoffeeScript file...');
-		log.error('Or maybe you don\'t have permissions to access the `.tmp` directory?');
-		log.error('e.g.');
-		log.error(relativePublicPath,'?' );
 		log.error();
-		log.error('If you think it\'s the latter case, you might try running:');
-		log.error('sudo chown -R',uid,relativePublicPath);
-		console.log();
-		
+		log.error(' *-> Is grunt installed locally?  Run `npm install grunt` if you\'re not sure.');
+		log.error();
+		log.error(' *-> You might have a malformed LESS, SASS, CoffeeScript file, etc.');
+		log.error();
+		log.error(' *-> Or maybe you don\'t have permissions to access the `.tmp` directory?');
+		log.error('     e.g., `' + relativePublicPath+'`','?' );
+		log.error();
+		log.error('     If you think this might be the case, try running:');
+		log.error('     sudo chown -R',uid,relativePublicPath);
+		log.blank();
+
 		return _terminateProcess(1);
 	},
 

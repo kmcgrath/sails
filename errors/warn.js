@@ -1,14 +1,11 @@
 /**
  * Module dependencies
  */
-var argv = require('optimist').argv,
-	util = require('sails-util'),
-	Logger = require('captains-log'),
-	path = require('path');
+var path = require('path');
 
-
-// Build logger using command-line arguments
-var log = new Logger(util.getCLIConfig(argv).log);
+// Build logger using best-available information
+// when this module is initially required.
+var log = require('captains-log')(require('../lib/configuration/rc'));
 
 
 /**
@@ -17,11 +14,15 @@ var log = new Logger(util.getCLIConfig(argv).log);
 module.exports = {
 
 	incompatibleLocalSails: function(requiredVersion, localVersion) {
-		log.warn('Trying to lift sails in', path.resolve(process.cwd(), 'node_modules/sails') + '...');
+		log.warn('Trying to lift app using a local copy of `sails`');
+		log.warn('(located in '+path.resolve(process.cwd(), 'node_modules/sails') + ')');
+		log.warn();
 		log.warn('But the package.json in the current directory indicates a dependency');
-		log.warn('on Sails ' + requiredVersion + ' and the locally installed Sails is ' + localVersion + '!');
-		console.log();
-		log.warn('If you run into compatibility problems, you may consider reinstalling Sails locally:');
-		log.warn('> npm install sails@' + requiredVersion);
+		log.warn('on Sails `' + requiredVersion + '`, and the locally installed Sails is `' + localVersion + '`!');
+		log.warn();
+		log.warn('If you run into compatibility issues, try installing '+requiredVersion+' locally:');
+		log.warn('    $ npm install sails@' + requiredVersion);
+		log.warn();
+		log.blank();
 	}
 };

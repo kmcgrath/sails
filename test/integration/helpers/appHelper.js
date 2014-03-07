@@ -10,11 +10,13 @@
 
 var fs = require('fs-extra');
 var wrench = require('wrench');
+var _ = require('lodash');
 var exec = require('child_process').exec;
 var path = require('path');
 var sailsBin = path.resolve('./bin/sails.js');
 var spawn = require('child_process').spawn;
 var _ioClient = require('./sails.io')(require('socket.io-client'));
+var Sails = require('../../../lib/app');
 
 // Make existsSync not crash on older versions of Node
 fs.existsSync = fs.existsSync || path.existsSync;
@@ -44,12 +46,12 @@ module.exports.build = function( /* [appName], done */ ) {
 	exec(sailsBin + ' new ' + appName, function(err) {
 		if (err) return done(err);
 
-		var fixtures = wrench.readdirSyncRecursive('./test/integration/fixtures/sampleApp');
+		var fixtures = wrench.readdirSyncRecursive('./test/integration/fixtures/sampleapp');
 		if (fixtures.length < 1) return done();
 
 		// If fixtures copy them to the test app
 		fixtures.forEach(function(file) {
-			var filePath = path.resolve('./test/integration/fixtures/sampleApp', file);
+			var filePath = path.resolve('./test/integration/fixtures/sampleapp', file);
 
 			// Check if file is a directory
 			var stat = fs.statSync(filePath);
@@ -90,51 +92,16 @@ module.exports.lift = function(options, callback) {
 	}
 
 	options = options || {};
-	// Start the sails server process
-	var liftOpts = ['lift'];
-	if (options.port) {
-		liftOpts.push('--port='+options.port);
-	}
-	var sailsbin = options.sailsbin || '../bin/sails.js';
-	var sailsprocess = spawn(sailsbin, liftOpts);
-
-	sailsprocess.on('error',function(err) {
-		return callback(err);
+	_.defaults(options, {
+		port: 1342
 	});
 
-	// Catch stderr messages 
-	sailsprocess.stderr.on('data', function (data) {
-		// Change buffer to string, then error
-		var dataString = (data + '');
-
-		// Share error with user running tests
-		console.error(dataString);
-
-		// In some cases, fire cb w/ error (automatically failing test)
-		// var err = new Error( dataString );
-		// throw err;
+	Sails().lift(options, function(err, sails) {
+		if (err) return callback(err);
+		sails.kill = sails.lower;
+		return callback(null, sails);
 	});
 
-
-	sailsprocess.stdout.on('data',function(data) {
-
-		// Change buffer to string
-		var dataString = data + '';
-
-		if (options.verbose) {
-			console.log(dataString);
-		}
-
-		// Make request once server has sucessfully started
-		if (dataString.match(/Server lifted/)) {
-			if (!options.verbose) {
-				sailsprocess.stdout.removeAllListeners('data');
-			}
-			sailsprocess.stderr.removeAllListeners('data');
-			callback(null, sailsprocess);
-		}
-
-	});
 };
 
 module.exports.buildAndLift = function(appName, options, callback) {
@@ -154,9 +121,9 @@ module.exports.liftWithTwoSockets = function(options, callback) {
 	}
 	module.exports.lift(options, function(err, sails) {
 		if (err) {return callback(err);}
-		var socket1 = _ioClient.connect('http://localhost:1337',{'force new connection': true});
+		var socket1 = _ioClient.connect('http://localhost:1342',{'force new connection': true});
 		socket1.on('connect', function() {
-			var socket2 = _ioClient.connect('http://localhost:1337',{'force new connection': true});
+			var socket2 = _ioClient.connect('http://localhost:1342',{'force new connection': true});
 			socket2.on('connect', function() {
 				callback(null, sails, socket1, socket2);
 			});	
